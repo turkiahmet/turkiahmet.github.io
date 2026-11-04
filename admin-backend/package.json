@@ -1,0 +1,1 @@
+{"name":"turkiahmet-private-admin","private":true,"type":"module","scripts":{"build":"node build.mjs","check":"node --check worker.js && node --check public/admin.js && node --check public/login.js","test":"node --test"}}

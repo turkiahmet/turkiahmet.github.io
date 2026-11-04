@@ -1,9 +1,15 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-<url><loc>https://turkiahmet.github.io/ar/</loc><xhtml:link rel="alternate" hreflang="ar" href="https://turkiahmet.github.io/ar/"/><xhtml:link rel="alternate" hreflang="tr" href="https://turkiahmet.github.io/tr/"/><xhtml:link rel="alternate" hreflang="en" href="https://turkiahmet.github.io/en/"/></url>
-<url><loc>https://turkiahmet.github.io/tr/</loc><xhtml:link rel="alternate" hreflang="ar" href="https://turkiahmet.github.io/ar/"/><xhtml:link rel="alternate" hreflang="tr" href="https://turkiahmet.github.io/tr/"/><xhtml:link rel="alternate" hreflang="en" href="https://turkiahmet.github.io/en/"/></url>
-<url><loc>https://turkiahmet.github.io/en/</loc><xhtml:link rel="alternate" hreflang="ar" href="https://turkiahmet.github.io/ar/"/><xhtml:link rel="alternate" hreflang="tr" href="https://turkiahmet.github.io/tr/"/><xhtml:link rel="alternate" hreflang="en" href="https://turkiahmet.github.io/en/"/></url>
-<url><loc>https://turkiahmet.github.io/ar/research/sharh-al-tawilat-2021/</loc><xhtml:link rel="alternate" hreflang="ar" href="https://turkiahmet.github.io/ar/research/sharh-al-tawilat-2021/"/><xhtml:link rel="alternate" hreflang="tr" href="https://turkiahmet.github.io/tr/research/sharh-al-tawilat-2021/"/><xhtml:link rel="alternate" hreflang="en" href="https://turkiahmet.github.io/en/research/sharh-al-tawilat-2021/"/></url>
-<url><loc>https://turkiahmet.github.io/tr/research/sharh-al-tawilat-2021/</loc><xhtml:link rel="alternate" hreflang="ar" href="https://turkiahmet.github.io/ar/research/sharh-al-tawilat-2021/"/><xhtml:link rel="alternate" hreflang="tr" href="https://turkiahmet.github.io/tr/research/sharh-al-tawilat-2021/"/><xhtml:link rel="alternate" hreflang="en" href="https://turkiahmet.github.io/en/research/sharh-al-tawilat-2021/"/></url>
-<url><loc>https://turkiahmet.github.io/en/research/sharh-al-tawilat-2021/</loc><xhtml:link rel="alternate" hreflang="ar" href="https://turkiahmet.github.io/ar/research/sharh-al-tawilat-2021/"/><xhtml:link rel="alternate" hreflang="tr" href="https://turkiahmet.github.io/tr/research/sharh-al-tawilat-2021/"/><xhtml:link rel="alternate" hreflang="en" href="https://turkiahmet.github.io/en/research/sharh-al-tawilat-2021/"/></url>
+<?xml version="1.0" encoding="utf-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://turkiahmet.github.io/ar/</loc></url>
+  <url><loc>https://turkiahmet.github.io/ar/cv/</loc></url>
+  <url><loc>https://turkiahmet.github.io/ar/research/sharh-al-tawilat-2021/</loc></url>
+  <url><loc>https://turkiahmet.github.io/ar/research/abdulcelil-isa-doctoral-research/</loc></url>
+  <url><loc>https://turkiahmet.github.io/tr/</loc></url>
+  <url><loc>https://turkiahmet.github.io/tr/cv/</loc></url>
+  <url><loc>https://turkiahmet.github.io/tr/research/sharh-al-tawilat-2021/</loc></url>
+  <url><loc>https://turkiahmet.github.io/tr/research/abdulcelil-isa-doctoral-research/</loc></url>
+  <url><loc>https://turkiahmet.github.io/en/</loc></url>
+  <url><loc>https://turkiahmet.github.io/en/cv/</loc></url>
+  <url><loc>https://turkiahmet.github.io/en/research/sharh-al-tawilat-2021/</loc></url>
+  <url><loc>https://turkiahmet.github.io/en/research/abdulcelil-isa-doctoral-research/</loc></url>
 </urlset>

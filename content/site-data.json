@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "profile": {
+    "ar": {
+      "displayName": "تركي الاحمد",
+      "role": "باحث في العلوم الإسلامية",
+      "tagline": "تُعنى أبحاثه بالتفسير وعلوم القرآن والعقائد والأديان.",
+      "bio": "طالب دكتوراه في التفسير بجامعة بايبورت بتركيا، وحاصل على الماجستير في التفسير من جامعة دجلة سنة ٢٠٢١. يُعنى بالتراث التفسيري ومناهج التفسير وتحقيق المخطوطات.",
+      "interests": [
+        "التفسير وعلوم القرآن",
+        "العقائد والأديان",
+        "مناهج التفسير",
+        "تحقيق المخطوطات"
+      ]
+    },
+    "tr": {
+      "displayName": "Türki Ahmet",
+      "role": "İslâmî ilimler araştırmacısı",
+      "tagline": "Tefsir, Kur’an ilimleri, akaid ve dinler üzerine çalışmaktadır.",
+      "bio": "Bayburt Üniversitesinde tefsir alanında doktora öğrenimini sürdürmektedir. Tefsir alanındaki yüksek lisansını 2021 yılında Dicle Üniversitesinde tamamlamıştır. Tefsir literatürü, tefsir yöntemleri ve yazma eserlerin tahkiki üzerine çalışmaktadır.",
+      "interests": [
+        "Tefsir ve Kur’an ilimleri",
+        "Akaid ve dinler",
+        "Tefsir yöntemleri",
+        "Yazma eserlerin tahkiki"
+      ]
+    },
+    "en": {
+      "displayName": "Turki Al Ahmad",
+      "role": "Researcher in Islamic sciences",
+      "tagline": "His research focuses on tafsir, Qur’anic sciences, theology, and religions.",
+      "bio": "A doctoral student in tafsir at Bayburt University, Türkiye, with a master’s degree in tafsir from Dicle University (2021). His research addresses exegetical literature, methods of Qur’anic interpretation, and the critical editing of manuscripts.",
+      "interests": [
+        "Tafsir and Qur’anic sciences",
+        "Theology and religions",
+        "Exegetical methods",
+        "Manuscript editing"
+      ]
+    }
+  },
+  "works": [
+    {
+      "id": "sharh-al-tawilat-2021",
+      "title": {
+        "ar": "تحقيق شرح التأويلات لعلاء الدين السمرقندي: الفاتحة والبقرة إلى الآية ٢٤",
+        "tr": "Alâeddin es-Semerkandî'nin Şerhu’t-Te’vîlât Adlı Eserinin Tahkiki (Fatiha Sûresi ve Bakara Sûresinin 24. Ayetine Kadar)",
+        "en": "The critical edition of Aladdin Samarqandi's Sharhu't-Tawilat (Surah of Al-Fatihah and until the 24th verse of the Surah of Bakara)"
+      },
+      "summary": {
+        "ar": "دراسة وتحقيق لمقدمة المؤلف، وسورة الفاتحة، وسورة البقرة إلى الآية الرابعة والعشرين.",
+        "tr": "Müellifin mukaddimesi, Fatiha sûresi ve Bakara sûresinin 24. âyetine kadar olan kısmının incelenmesi ve tahkiki.",
+        "en": "A study and critical edition of the author’s introduction, Sūrat al-Fātiḥa, and Sūrat al-Baqara through verse 24."
+      },
+      "keywords": {
+        "ar": [
+          "السمرقندي",
+          "الماتريدي",
+          "شرح التأويلات",
+          "تحقيق المخطوطات"
+        ],
+        "tr": [
+          "Semerkandî",
+          "Mâtürîdî",
+          "Şerhu’t-Te’vîlât",
+          "Tahkik"
+        ],
+        "en": [
+          "Samarqandi",
+          "Maturidi",
+          "Sharh al-Tawilat",
+          "Critical edition"
+        ]
+      },
+      "type": "masters_thesis",
+      "status": "published",
+      "year": 2021,
+      "officialUrl": "https://hdl.handle.net/11468/7410"
+    },
+    {
+      "id": "abdulcelil-isa-doctoral-research",
+      "title": {
+        "ar": "عبد الجليل عيسى وتفسيره تيسير القرآن الكريم",
+        "tr": "Abdülcelil İsa ve Teysirü'l-Kur'ani'l-Kerim Adlı Tefsiri",
+        "en": "ʿAbd al-Jalīl ʿĪsā and His Qur’anic Commentary Taysīr al-Qurʾān al-Karīm"
+      },
+      "summary": {
+        "ar": "بحث دكتوراه في التفسير بجامعة بايبورت، قيد الإعداد.",
+        "tr": "Bayburt Üniversitesinde tefsir alanında devam eden doktora araştırması.",
+        "en": "Doctoral research in tafsir at Bayburt University, in progress."
+      },
+      "keywords": {
+        "ar": [
+          "عبد الجليل عيسى",
+          "التفسير الحديث",
+          "مناهج التفسير"
+        ],
+        "tr": [
+          "Abdülcelil İsa",
+          "Çağdaş tefsir",
+          "Tefsir yöntemleri"
+        ],
+        "en": [
+          "Abd al-Jalil Isa",
+          "Modern tafsir",
+          "Exegetical methods"
+        ]
+      },
+      "type": "doctoral_thesis",
+      "status": "in_progress",
+      "year": null,
+      "officialUrl": "https://kutuphane.isam.org.tr/detayilhtezt.php?navdil=tr&tidno=50777"
+    }
+  ]
+}
