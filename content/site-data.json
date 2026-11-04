@@ -75,40 +75,6 @@
       "status": "published",
       "year": 2021,
       "officialUrl": "https://hdl.handle.net/11468/7410"
-    },
-    {
-      "id": "abdulcelil-isa-doctoral-research",
-      "title": {
-        "ar": "عبد الجليل عيسى وتفسيره تيسير القرآن الكريم",
-        "tr": "Abdülcelil İsa ve Teysirü'l-Kur'ani'l-Kerim Adlı Tefsiri",
-        "en": "ʿAbd al-Jalīl ʿĪsā and His Qur’anic Commentary Taysīr al-Qurʾān al-Karīm"
-      },
-      "summary": {
-        "ar": "بحث دكتوراه في التفسير بجامعة بايبورت، قيد الإعداد.",
-        "tr": "Bayburt Üniversitesinde tefsir alanında devam eden doktora araştırması.",
-        "en": "Doctoral research in tafsir at Bayburt University, in progress."
-      },
-      "keywords": {
-        "ar": [
-          "عبد الجليل عيسى",
-          "التفسير الحديث",
-          "مناهج التفسير"
-        ],
-        "tr": [
-          "Abdülcelil İsa",
-          "Çağdaş tefsir",
-          "Tefsir yöntemleri"
-        ],
-        "en": [
-          "Abd al-Jalil Isa",
-          "Modern tafsir",
-          "Exegetical methods"
-        ]
-      },
-      "type": "doctoral_thesis",
-      "status": "in_progress",
-      "year": null,
-      "officialUrl": "https://kutuphane.isam.org.tr/detayilhtezt.php?navdil=tr&tidno=50777"
     }
   ]
 }

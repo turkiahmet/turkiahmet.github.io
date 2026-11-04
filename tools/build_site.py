@@ -43,7 +43,7 @@ def validate():
     for w in DATA['works']:
         if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,99}',w['id']) or w['id'] in ids: raise ValueError('Invalid work id')
         ids.add(w['id'])
-        if w.get('status') not in ('published','in_progress'): raise ValueError('Private drafts cannot enter public build')
+        if w.get('status') != 'published': raise ValueError('Only officially published works may enter the public build')
         if w.get('type') not in LABEL['en']['types']: raise ValueError('Invalid work type')
         for l in LANGS:
             if not isinstance(w['title'].get(l),str) or not w['title'][l].strip(): raise ValueError('Every public work needs three titles')
@@ -101,6 +101,7 @@ def home(lang):
     t=t.replace('<a href="#education">','<a href="/'+lang+'/cv/">'+E(lab['cv'])+'</a><a href="#education">',1)
     t=t.replace('</main>','<section class="section" aria-labelledby="cv-download"><h2 id="cv-download">'+E(lab['cv'])+'</h2><p><a href="/'+lang+'/cv/">'+E(lab['public_cv'])+'</a> · <a href="/downloads/turki-ahmet-cv-'+lang+'.pdf" download>'+E(lab['download'])+'</a></p></section></main>',1)
     t=t.replace('<footer id="contact"','<div class="container" data-contact-form></div>\n<footer id="contact"',1)
+    t=re.sub(r'<section class="section" aria-labelledby="ongoing">.*?</section>','',t,count=1,flags=re.S)
     return transform_common(t,lang)
 
 def master(lang):
