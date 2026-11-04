@@ -6,7 +6,7 @@ async function snapshot(env){
  if(!p)fail(409,'استورد المحتوى الحالي قبل النشر.');
  const profile=validateProfile(parseDocument(p));
  const workRows=await rows(env,"SELECT document FROM research WHERE visibility='public' ORDER BY year DESC,created_at ASC LIMIT 200");
- const works=workRows.map(row=>{const {visibility,...work}=validateResearch({...parseDocument(row),visibility:'public'});return work;});
+ const works=workRows.map(parseDocument).filter(work=>work.status==='published').map(work=>{const {visibility,...record}=validateResearch({...work,visibility:'public'});return record;});
  if(!works.some(w=>w.id==='sharh-al-tawilat-2021'))fail(409,'لم يوجد سجل الماجستير المعتمد؛ أعد استيراد المصدر أو حفظه قبل النشر.');
  return {schemaVersion:1,profile,works};
 }
@@ -21,10 +21,10 @@ async function importCurrent(env,fetchImpl,session,clock){
  const existing=await env.DB.prepare('SELECT document FROM profile WHERE id=1').first();
  if(existing)fail(409,'سبق استيراد المحتوى؛ لن يستبدل المحتوى المحفوظ تلقائيًا.');
  const source=await githubRead(env,fetchImpl);let seed;try{seed=JSON.parse(decoder.decode(Uint8Array.from(atob((source.content||'').replace(/\s/g,'')),c=>c.charCodeAt(0))));}catch{fail(503,'لم يتوفر مصدر الموقع الجديد للاستيراد بعد.');}if(seed.schemaVersion!==1||!Array.isArray(seed.works)||seed.works.length>200)fail(400,'صيغة مصدر الموقع غير صالحة.');
- const profile=validateProfile(seed.profile), works=seed.works.map(w=>validateResearch({...w,visibility:'public'}));
+ const profile=validateProfile(seed.profile), works=seed.works.map(w=>validateResearch({...w,visibility:w.status==='published'?'public':'draft'}));
  if(!works.some(w=>w.id==='sharh-al-tawilat-2021'))fail(400,'يجب أن يتضمن المصدر سجل الماجستير المعتمد.');
  const now=nowSeconds(clock),statements=[env.DB.prepare('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind('publication_base_sha',source.sha),env.DB.prepare('INSERT INTO profile(id,document,updated_at) VALUES(1,?,?)').bind(JSON.stringify(profile),now)];
- for(const work of works)statements.push(env.DB.prepare('INSERT INTO research(id,document,year,visibility,created_at,updated_at) VALUES(?,?,?,?,?,?)').bind(work.id,JSON.stringify(work),work.year,'public',now,now));
+ for(const work of works)statements.push(env.DB.prepare('INSERT INTO research(id,document,year,visibility,created_at,updated_at) VALUES(?,?,?,?,?,?)').bind(work.id,JSON.stringify(work),work.year,work.visibility,now,now));
  statements.push(env.DB.prepare('INSERT INTO revisions(kind,record_id,document,actor_sub,created_at) VALUES(?,?,?,?,?)').bind('import','site',JSON.stringify({count:works.length,source:SEED_URL}),session.sub,now));
  await env.DB.batch(statements);return {imported:true,works:works.length};
 }

@@ -164,6 +164,7 @@ function validateProfile(body) {
 function validateResearch(body) {
  const v=body.record || body;
  if(!['masters_thesis','doctoral_thesis','article','other'].includes(v.type)||!['published','in_progress'].includes(v.status)||!['draft','public'].includes(v.visibility||'draft')) fail(400,'نوع العمل أو حالته غير صالحة.');
+ if((v.visibility||'draft')==='public'&&v.status!=='published')fail(400,'لا يُسمح بعرض عمل لم يُنشر رسميًا. احفظه مسودة خاصة.');
  const out={id:textField(v.id,100,'معرّف العمل'),title:{},summary:{},keywords:{},type:v.type,status:v.status,visibility:v.visibility||'draft'};
  if(out.id && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(out.id)) fail(400,'معرّف العمل يقبل أحرفًا لاتينية صغيرة وأرقامًا وواصلات فقط.');
  for(const lang of LANGS){out.title[lang]=textField(v.title?.[lang],500,'العنوان',out.visibility==='public');out.summary[lang]=textField(v.summary?.[lang],12000,'الملخص');const k=v.keywords?.[lang]||[];if(!Array.isArray(k)||k.length>20) fail(400,'الكلمات المفتاحية كثيرة.');out.keywords[lang]=k.map(x=>textField(x,100,'الكلمة المفتاحية',true));}
