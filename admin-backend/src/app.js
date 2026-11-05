@@ -1,6 +1,26 @@
 function intSetting(env,key,fallback,min,max){const n=Number(env[key]??fallback);return Number.isInteger(n)&&n>=min&&n<=max?n:fallback;}
 function parseDocument(row){try{return JSON.parse(row.document);}catch{fail(503,'تحتاج البيانات المحفوظة إلى مراجعة.');}}
 async function rows(env,sql,...args){return (await env.DB.prepare(sql).bind(...args).all()).results||[];}
+async function notificationSummary(request, env, url) {
+ await requireNotificationAccess(request,env);
+ if(request.method!=='GET')fail(405,'هذه الطريقة غير متاحة.');
+ if(url.searchParams.getAll('after').length!==1||[...url.searchParams.keys()].some(k=>k!=='after'))fail(400,'مؤشر التنبيهات غير صالح.');
+ const raw=url.searchParams.get('after');
+ if(!/^(0|[1-9][0-9]*)$/.test(raw))fail(400,'مؤشر التنبيهات غير صالح.');
+ const after=Number(raw);if(!Number.isSafeInteger(after))fail(400,'مؤشر التنبيهات غير صالح.');
+ const entries=await rows(env,"SELECT key,value FROM settings WHERE key IN ('contact_notification_sequence','contact_notification_latest_at')");
+ const values=Object.fromEntries(entries.map(row=>[row.key,row.value]));
+ if(!Object.hasOwn(values,'contact_notification_sequence')||!Object.hasOwn(values,'contact_notification_latest_at')||!/^(0|[1-9][0-9]*)$/.test(values.contact_notification_sequence))fail(503,'يلزم إكمال تهيئة عداد التنبيهات.');
+ const sequence=Number(values.contact_notification_sequence);if(!Number.isSafeInteger(sequence))fail(503,'يحتاج عداد التنبيهات إلى مراجعة.');
+ if(after>sequence)fail(409,'مؤشر التنبيهات يسبق العداد الحالي؛ راجع التهيئة قبل استئناف الإرسال.');
+ let latestAt=null;
+ if(sequence>0){
+  const latest=Number(values.contact_notification_latest_at);
+  if(!Number.isSafeInteger(latest)||latest<0||!Number.isFinite(new Date(latest*1000).getTime()))fail(503,'يحتاج وقت التنبيهات إلى مراجعة.');
+  latestAt=new Date(latest*1000).toISOString();
+ }
+ return json({sequence,pending:sequence-after,latestAt},200,{'X-Robots-Tag':'noindex, nofollow'});
+}
 async function snapshot(env){
  const p=await env.DB.prepare('SELECT document FROM profile WHERE id=1').first();
  if(!p)fail(409,'استورد المحتوى الحالي قبل النشر.');
@@ -73,6 +93,7 @@ export function createApp({fetchImpl=fetch,clock=Date.now,assets={}}={}){
   const url=new URL(request.url),path=url.pathname.replace(/\/$/,'')||'/';
   const isPublic=['/api/contact','/api/analytics','/api/config'].includes(path);
   try{
+   if(path==='/api/notifications/summary')return await notificationSummary(request,env,url);
    if(isPublic&&request.method==='OPTIONS'){
     requireOrigin(request,SITE_ORIGIN);return new Response(null,{status:204,headers:publicHeaders()});
    }

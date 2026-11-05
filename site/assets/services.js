@@ -35,10 +35,12 @@
     section.append(f);host.append(section);
   }
   async function analytics(origin,config) {
-    if(!config.analyticsEnabled||navigator.globalPrivacyControl||navigator.doNotTrack==='1')return;
+    const state=value=>document.documentElement.setAttribute('data-analytics-status',value);
+    if(!config.analyticsEnabled){state('disabled');return;}
+    if(navigator.globalPrivacyControl||navigator.doNotTrack==='1'){state('privacy');return;}
     let visit=true;const now=Date.now();try{const old=Number(sessionStorage.getItem('academic-visit-time')||'0');visit=now-old>30*60*1000;sessionStorage.setItem('academic-visit-time',String(now));}catch{}
     let referrer='';try{referrer=document.referrer?new URL(document.referrer).origin:'';}catch{}
-    try{await fetch(origin+'/api/analytics',{method:'POST',mode:'cors',credentials:'omit',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({path:location.pathname,referrer,visit})});}catch{}
+    try{const result=await fetch(origin+'/api/analytics',{method:'POST',mode:'cors',credentials:'omit',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({path:location.pathname,referrer,visit})});state(result.ok?'sent':'unavailable');}catch{state('unavailable');}
   }
   async function start(){try{
     const services=await fetch('/services.json',{credentials:'omit',cache:'no-store'}).then(r=>r.ok?r.json():null);if(!services?.backendOrigin)return;

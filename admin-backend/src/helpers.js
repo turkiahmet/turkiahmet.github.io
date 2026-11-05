@@ -30,6 +30,18 @@ function parseSegment(value) { try { return JSON.parse(decoder.decode(unb64(valu
 function randomToken() { return b64(crypto.getRandomValues(new Uint8Array(32))); }
 async function digest(value) { return b64(new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(value)))); }
 async function hmacKey(secret) { return crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']); }
+// This separate credential can read notification counts only; an owner session is not accepted.
+async function requireNotificationAccess(request, env) {
+  if (env.EMAIL_NOTIFICATIONS_ENABLED !== 'true') fail(404, 'هذه الصفحة غير متاحة.');
+  if (!env.DB || typeof env.DB.prepare !== 'function' || typeof env.NOTIFICATION_SECRET !== 'string' || !/^[A-Za-z0-9_-]{43,128}$/.test(env.NOTIFICATION_SECRET)) fail(503, 'لم يكتمل إعداد التنبيهات.');
+  if (!request.url.startsWith('https://')) fail(503, 'يلزم اتصال آمن للتنبيهات.');
+  const match = /^Bearer ([A-Za-z0-9_-]{43,128})$/.exec(request.headers.get('Authorization') || '');
+  if (!match) fail(401, 'يلزم تصريح التنبيهات.');
+  // Compare through Web Crypto verification rather than a length-dependent string loop.
+  const data = encoder.encode('turkiahmet-contact-notification-v1');
+  const proof = await crypto.subtle.sign('HMAC', await hmacKey(match[1]), data);
+  if (!await crypto.subtle.verify('HMAC', await hmacKey(env.NOTIFICATION_SECRET), proof, data)) fail(403, 'تصريح التنبيهات غير صالح.');
+}
 async function signPayload(payload, secret) {
   const data = b64(encoder.encode(JSON.stringify(payload)));
   const signature = b64(new Uint8Array(await crypto.subtle.sign('HMAC', await hmacKey(secret), encoder.encode(data))));

@@ -30,3 +30,79 @@ test('approved owner image/PDF create fixed public uploads, receipts private, da
 
 test('unpublished works stay private and legacy public rows are excluded',async()=>{const f=fixture(),l=await login(f);await f.app.fetch(req('/api/admin/import',admin(l)),f.env);const w={id:'unpublished-guard',title:{ar:'غير منشور',tr:'Unpublished',en:'Unpublished'},summary:{ar:'PRIVATE UNPUBLISHED',tr:'',en:''},keywords:{},type:'article',status:'in_progress',visibility:'public',year:null};assert.equal((await f.app.fetch(req('/api/admin/research',admin(l,w)),f.env)).status,400);w.visibility='draft';assert.equal((await f.app.fetch(req('/api/admin/research',admin(l,w)),f.env)).status,201);assert.equal((await f.app.fetch(req('/api/admin/research/'+w.id,admin(l,{...w,visibility:'public'},'PUT')),f.env)).status,400);const bad={...w,id:'legacy-unpublished',visibility:'public'};f.DB.sqlite.prepare('INSERT INTO research(id,document,year,visibility,created_at,updated_at) VALUES(?,?,?,?,?,?)').run(bad.id,JSON.stringify(bad),null,'public',NOW,NOW);const preview=await(await f.app.fetch(req('/api/admin/preview',{cookie:l.cookie}),f.env)).json();assert(preview.source.works.every(x=>x.status==='published'));assert(!JSON.stringify(preview.source).includes('PRIVATE UNPUBLISHED'));assert.equal((await f.app.fetch(req('/api/admin/publish',admin(l)),f.env)).status,200);const published=JSON.parse(Buffer.from(f.publication().content,'base64').toString('utf8'));assert(published.works.every(x=>x.status==='published'));});
 test('import demotes unpublished source items to private drafts',async()=>{const extra={id:'import-unpublished',title:{ar:'مسودة',tr:'Draft',en:'Draft'},summary:{ar:'Not official',tr:'',en:''},keywords:{},type:'article',status:'in_progress',year:null};seed.works.push(extra);try{const f=fixture(),l=await login(f);assert.equal((await f.app.fetch(req('/api/admin/import',admin(l)),f.env)).status,200);const row=f.DB.sqlite.prepare('SELECT document,visibility FROM research WHERE id=?').get(extra.id);assert.equal(row.visibility,'draft');assert.equal(JSON.parse(row.document).visibility,'draft');const p=await(await f.app.fetch(req('/api/admin/preview',{cookie:l.cookie}),f.env)).json();assert(!p.source.works.some(x=>x.id===extra.id));}finally{seed.works.pop();}});
+
+const NOTIFICATION_TEST_TOKEN='test-only-notification-token-not-a-real-credential-123456789';
+const notificationEnv=f=>({...f.env,EMAIL_NOTIFICATIONS_ENABLED:'true',NOTIFICATION_SECRET:NOTIFICATION_TEST_TOKEN});
+function notificationRequest(after='0',{token=NOTIFICATION_TEST_TOKEN,method='GET',cookie='',query}={}){
+ const r=req('/api/notifications/summary'+(query??('?after='+after)),{method,cookie});
+ if(token!==null)r.headers.set('Authorization','Bearer '+token);
+ return r;
+}
+const notificationSequence=f=>Number(f.DB.sqlite.prepare("SELECT value FROM settings WHERE key='contact_notification_sequence'").get().value);
+test('notification summary is disabled by default, separately authenticated, read-only and has no CORS or message data',async()=>{
+ const f=fixture(),env=notificationEnv(f);
+ assert.equal((await f.app.fetch(notificationRequest(),f.env)).status,404);
+ assert.equal((await f.app.fetch(notificationRequest(),{...env,NOTIFICATION_SECRET:undefined})).status,503);
+ assert.equal((await f.app.fetch(notificationRequest(),{...env,NOTIFICATION_SECRET:'short'})).status,503);
+ const l=await login(f);
+ for(const r of [notificationRequest('0',{token:null}),notificationRequest('0',{token:null,cookie:l.cookie}),notificationRequest('0',{token:null,query:'?after=0&token='+NOTIFICATION_TEST_TOKEN})]){
+  const response=await f.app.fetch(r,env);assert.equal(response.status,401);assert.equal(response.headers.get('Access-Control-Allow-Origin'),null);
+ }
+ assert.equal((await f.app.fetch(notificationRequest('0',{token:'wrong-test-token-not-a-real-credential-123456789'}),env)).status,403);
+ for(const method of ['POST','PUT','DELETE','OPTIONS']){
+  const response=await f.app.fetch(notificationRequest('0',{method}),env);assert.equal(response.status,405);assert.equal(response.headers.get('Access-Control-Allow-Origin'),null);
+ }
+ const response=await f.app.fetch(notificationRequest(),env);
+ assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Control'),'no-store');assert.equal(response.headers.get('Access-Control-Allow-Origin'),null);
+ assert.deepEqual(await response.json(),{sequence:0,pending:0,latestAt:null});
+ const body={message:'PRIVATE VISITOR MESSAGE',name:'PRIVATE VISITOR NAME',email:'private-visitor@example.test'};
+ assert.equal((await f.app.fetch(req('/api/contact',{method:'POST',data:body,origin:PUBLIC}),f.env)).status,201);
+ const summary=await(await f.app.fetch(notificationRequest(),env)).json();
+ assert.deepEqual(summary,{sequence:1,pending:1,latestAt:new Date(CLOCK()).toISOString()});
+ assert(!JSON.stringify(summary).includes('PRIVATE'));assert(!JSON.stringify(summary).includes('example.test'));
+ assert.deepEqual(Object.keys(summary).sort(),['latestAt','pending','sequence']);
+});
+test('notification cursor rejects malformed, duplicate, query credentials and future values without changing the counter',async()=>{
+ const f=fixture(),env=notificationEnv(f);
+ for(const query of ['', '?after=-1','?after=01','?after=1.2','?after=NaN','?after=Infinity','?after=9007199254740992','?after=0&after=0','?after=0&token=fake','?after=0&extra=1'])assert.equal((await f.app.fetch(notificationRequest('0',{query}),env)).status,400,query);
+ assert.equal((await f.app.fetch(notificationRequest('1'),env)).status,409);assert.equal(notificationSequence(f),0);
+ f.DB.sqlite.prepare("DELETE FROM settings WHERE key='contact_notification_sequence'").run();
+ assert.equal((await f.app.fetch(notificationRequest(),env)).status,503);
+});
+test('notification counter increments only for saved messages, not honeypots, invalid messages or a full inbox',async()=>{
+ const f=fixture();
+ for(const data of [{message:'',website:''},{message:'   '},{message:'Invalid extra',attachment:'file'}])assert.equal((await f.app.fetch(req('/api/contact',{method:'POST',data,origin:PUBLIC}),f.env)).status,400);
+ assert.equal((await f.app.fetch(req('/api/contact',{method:'POST',data:{message:'ignored',website:'bot.example'},origin:PUBLIC}),f.env)).status,201);
+ assert.equal(notificationSequence(f),0);
+ const insert=f.DB.sqlite.prepare('INSERT INTO contacts(id,name,email,subject,message,created_at) VALUES(?,?,?,?,?,?)');
+ for(let i=0;i<100;i++)insert.run('capacity-'+i,'','','','Saved message',NOW);
+ assert.equal(notificationSequence(f),100);
+ const full=await f.app.fetch(req('/api/contact',{method:'POST',data:{message:'Not saved'},origin:PUBLIC}),{...f.env,CONTACT_CAPACITY:100});
+ assert.equal(full.status,503);assert.equal(notificationSequence(f),100);assert.equal(f.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM contacts').get().n,100);
+});
+test('notification sequence survives deletion of the highest contact row, archives and transaction rollback',async()=>{
+ const f=fixture(),env=notificationEnv(f),l=await login(f),send=()=>f.app.fetch(req('/api/contact',{method:'POST',data:{message:'Saved'},origin:PUBLIC}),f.env);
+ assert.equal((await send()).status,201);assert.equal((await send()).status,201);assert.equal(notificationSequence(f),2);
+ const highest=f.DB.sqlite.prepare('SELECT id FROM contacts ORDER BY rowid DESC LIMIT 1').get().id;
+ assert.equal((await f.app.fetch(req('/api/admin/inbox/'+highest+'/archive',admin(l)),f.env)).status,200);
+ assert.equal(notificationSequence(f),2);
+ assert.equal((await f.app.fetch(req('/api/admin/inbox/'+highest,admin(l,{},'DELETE')),f.env)).status,200);
+ assert.equal(notificationSequence(f),2);
+ f.DB.sqlite.exec('BEGIN');
+ f.DB.sqlite.prepare('INSERT INTO contacts(id,name,email,subject,message,created_at) VALUES(?,?,?,?,?,?)').run('rolled-back','','','','Not committed',NOW);
+ assert.equal(notificationSequence(f),3);f.DB.sqlite.exec('ROLLBACK');assert.equal(notificationSequence(f),2);
+ assert.equal((await send()).status,201);assert.equal(notificationSequence(f),3);
+ assert.deepEqual(await(await f.app.fetch(notificationRequest('2'),env)).json(),{sequence:3,pending:1,latestAt:new Date(CLOCK()).toISOString()});
+});
+test('notification migration preserves old contacts and an existing counter when applied repeatedly',()=>{
+ const f=fixture(),migration=fs.readFileSync(new URL('migrations/001_contact_notifications.sql',import.meta.url),'utf8');
+ f.DB.sqlite.exec("DROP TRIGGER contacts_notification_counter; DELETE FROM settings WHERE key IN ('contact_notification_sequence','contact_notification_latest_at')");
+ const insert=f.DB.sqlite.prepare('INSERT INTO contacts(id,name,email,subject,message,created_at) VALUES(?,?,?,?,?,?)');
+ insert.run('pre-migration','','','','Original message remains',NOW);
+ f.DB.sqlite.exec(migration);assert.equal(notificationSequence(f),0);
+ insert.run('arrival-one','','','','New arrival',NOW);assert.equal(notificationSequence(f),1);
+ f.DB.sqlite.exec(migration);f.DB.sqlite.exec(migration);assert.equal(notificationSequence(f),1);
+ insert.run('arrival-two','','','','New arrival',NOW+1);assert.equal(notificationSequence(f),2);
+ assert.equal(f.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM contacts').get().n,3);
+ assert.equal(f.DB.sqlite.prepare("SELECT message FROM contacts WHERE id='pre-migration'").get().message,'Original message remains');
+});

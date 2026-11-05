@@ -6,6 +6,14 @@ CREATE INDEX IF NOT EXISTS research_visibility ON research(visibility,year DESC)
 CREATE TABLE IF NOT EXISTS revisions(id INTEGER PRIMARY KEY AUTOINCREMENT,kind TEXT NOT NULL,record_id TEXT NOT NULL,document TEXT NOT NULL,actor_sub TEXT NOT NULL,created_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS contacts(id TEXT PRIMARY KEY,name TEXT NOT NULL,email TEXT NOT NULL,subject TEXT NOT NULL DEFAULT '',message TEXT NOT NULL,created_at INTEGER NOT NULL,read_at INTEGER,archived_at INTEGER);
 CREATE INDEX IF NOT EXISTS contacts_created ON contacts(created_at DESC);
+-- New arrivals are counted independently from current inbox size; deleting a contact never rewinds this counter.
+INSERT OR IGNORE INTO settings(key,value) VALUES('contact_notification_sequence','0');
+INSERT OR IGNORE INTO settings(key,value) VALUES('contact_notification_latest_at','');
+CREATE TRIGGER IF NOT EXISTS contacts_notification_counter AFTER INSERT ON contacts
+BEGIN
+ UPDATE settings SET value=CAST(CAST(value AS INTEGER)+1 AS TEXT) WHERE key='contact_notification_sequence';
+ UPDATE settings SET value=CAST(NEW.created_at AS TEXT) WHERE key='contact_notification_latest_at';
+END;
 CREATE TABLE IF NOT EXISTS admin_nonces(nonce_hash TEXT PRIMARY KEY,expires_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS rate_limits(bucket TEXT PRIMARY KEY,hits INTEGER NOT NULL,expires_at INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS rate_limits_expiry ON rate_limits(expires_at);
