@@ -37,7 +37,7 @@
   async function analytics(origin,config) {
     if(!config.analyticsEnabled||navigator.globalPrivacyControl||navigator.doNotTrack==='1')return;
     let visit=true;const now=Date.now();try{const old=Number(sessionStorage.getItem('academic-visit-time')||'0');visit=now-old>30*60*1000;sessionStorage.setItem('academic-visit-time',String(now));}catch{}
-    let referrer='';try{referrer=document.referrer?new URL(document.referrer).hostname:'';}catch{}
+    let referrer='';try{referrer=document.referrer?new URL(document.referrer).origin:'';}catch{}
     try{await fetch(origin+'/api/analytics',{method:'POST',mode:'cors',credentials:'omit',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({path:location.pathname,referrer,visit})});}catch{}
   }
   async function start(){try{
