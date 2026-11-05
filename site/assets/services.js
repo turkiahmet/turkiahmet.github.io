@@ -41,9 +41,9 @@
     try{await fetch(origin+'/api/analytics',{method:'POST',mode:'cors',credentials:'omit',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({path:location.pathname,referrer,visit})});}catch{}
   }
   async function start(){try{
-    const services=await fetch('/services.json',{credentials:'omit'}).then(r=>r.ok?r.json():null);if(!services?.backendOrigin)return;
+    const services=await fetch('/services.json',{credentials:'omit',cache:'no-store'}).then(r=>r.ok?r.json():null);if(!services?.backendOrigin)return;
     const u=new URL(services.backendOrigin);if(u.protocol!=='https:')return;const origin=u.origin;
-    const config=await fetch(origin+'/api/config',{credentials:'omit',mode:'cors'}).then(r=>r.ok?r.json():null);if(!config)return;
+    const config=await fetch(origin+'/api/config',{credentials:'omit',mode:'cors',cache:'no-store'}).then(r=>r.ok?r.json():null);if(!config)return;
     form(origin,config);analytics(origin,config);
   }catch{}}
   start();
