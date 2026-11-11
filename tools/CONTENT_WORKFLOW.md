@@ -8,6 +8,8 @@ Each public work has a stable lowercase id, three titles and summaries, a scient
 
 The original Turkish and English abstracts are retained in `content/abstracts.json`. They are explicitly marked as the original text from the 2021 thesis. There is no asserted original Arabic abstract.
 
+Stable scholarly profile links are stored in `content/profile-links.json`, separately from the profile and work data that the administration backend publishes. The builder uses these links in `Person.sameAs` on generated pages and adds the Google Scholar link beside ORCID on each language's home page. They provide direct access and connect the public profiles; they do not guarantee search indexing.
+
 ## Public CV PDFs
 
 Current PDF snapshots are in `site/downloads/`. To regenerate them after changing profile data:

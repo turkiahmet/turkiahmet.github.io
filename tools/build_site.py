@@ -14,6 +14,7 @@ DICLE_HANDLE = 'https://hdl.handle.net/11468/7410'
 DICLE_PDF = 'https://acikerisim.dicle.edu.tr/bitstreams/c2d80d11-cfcf-4ea4-919c-2ed97ad9d1b9/download'
 DATA = json.loads((ROOT / 'content/site-data.json').read_text())
 ABSTRACTS = json.loads((ROOT / 'content/abstracts.json').read_text())
+PROFILE_LINKS = json.loads((ROOT / 'content/profile-links.json').read_text())
 E = lambda s: html.escape(str(s or ''), quote=True)
 LABEL = {
  'ar': {'home':'الرئيسية','cv':'السيرة العلمية','download':'تنزيل السيرة العلمية PDF','education':'التعليم الجامعي','interests':'مجالات البحث','experience':'خبرات علمية وتعليمية','works':'الأعمال العلمية','ongoing':'البحث الجاري','details':'قراءة بيانات العمل','source':'السجل الرسمي','contact':'للتواصل','abstract':'المستخلص الأصلي للرسالة — ٢٠٢١','original_note':'نص المستخلص كما ورد في رسالة سنة ٢٠٢١؛ يحفظ عبارات المؤلف في سياقها التاريخي.','public_cv':'سيرة علمية عامة','updated':'آخر تحديث: ٥ نوفمبر ٢٠٢٦','types':{'masters_thesis':'رسالة ماجستير','doctoral_thesis':'بحث دكتوراه','article':'مقال علمي','other':'عمل علمي'},'status':{'published':'منجز / منشور','in_progress':'قيد الإعداد'}},
@@ -34,6 +35,8 @@ def safe_url(value):
 
 def validate():
     if DATA.get('schemaVersion') != 1: raise ValueError('Unsupported data schema')
+    for key in ('orcid','googleScholar'):
+        if not safe_url(PROFILE_LINKS.get(key)): raise ValueError('Missing academic profile link')
     for lang in LANGS:
         p = DATA['profile'][lang]
         for field in ('displayName','role','tagline','bio'):
@@ -59,6 +62,10 @@ def full_description(lang):
     p=DATA['profile'][lang]
     return p['role'] + ('، ' if lang=='ar' else '. ') + p['tagline']
 
+def profile_same_as(existing=None):
+    links=[existing] if isinstance(existing,str) else list(existing or [])
+    return list(dict.fromkeys(links+list(PROFILE_LINKS.values())))
+
 def transform_common(text, lang):
     p=DATA['profile'][lang]
     text=re.sub(r'<meta property="og:site_name" content="[^"]*">','<meta property="og:site_name" content="'+E(p['displayName'])+'">',text)
@@ -67,6 +74,7 @@ def transform_common(text, lang):
         for node in obj.get('@graph',[]):
             if node.get('@type')=='Person':
                 node.update(name=p['displayName'],description=full_description(lang),knowsAbout=DATA['profile']['en']['interests'])
+                node['sameAs']=profile_same_as(node.get('sameAs'))
             if node.get('@type')=='WebSite':
                 node.update(name=DATA['profile']['ar']['displayName'],alternateName=[DATA['profile'][l]['displayName'] for l in ('tr','en')])
             if node.get('@type')=='ProfilePage': node['name']=p['displayName']
@@ -87,6 +95,9 @@ def card(w,lang):
 
 def home(lang):
     p=DATA['profile'][lang]; t=(ROOT/'templates'/('home-'+lang+'.html')).read_text(); lab=LABEL[lang]
+    scholar_label={'ar':'الباحث العلمي','tr':'Google Akademik','en':'Google Scholar'}[lang]
+    scholar_link='<a href="'+E(PROFILE_LINKS['googleScholar'])+'" rel="me">'+E(scholar_label)+'</a>'
+    t=re.sub(r'(<p class="profile-link">.*?)(</p>)',lambda m:m[1]+' · '+scholar_link+m[2],t,count=1,flags=re.S)
     t=re.sub(r'<title>.*?</title>','<title>'+E(p['displayName'])+'</title>',t)
     for attr in ('name="description"','property="og:description"'):
         t=re.sub(r'<meta '+attr+r' content="[^"]*">','<meta '+attr+' content="'+E(full_description(lang)+' '+p['bio'])+'">',t)
@@ -140,7 +151,7 @@ def master(lang):
 def page_shell(lang,path,title,description,content,graph=None):
     p=DATA['profile'][lang]; lab=LABEL[lang]; url=ORIGIN+'/'+lang+'/'+path
     alternates=''.join('<link rel="alternate" hreflang="'+l+'" href="'+ORIGIN+'/'+l+'/'+path+'">' for l in LANGS)
-    obj={'@context':'https://schema.org','@graph':[{'@type':'Person','@id':ORIGIN+'/#person','name':p['displayName'],'alternateName':['تركي الاحمد','تركي الأحمد','Türki Ahmet','Turki Ahmet','Turki Al Ahmad'],'description':full_description(lang),'url':ORIGIN+'/en/','sameAs':['https://orcid.org/0000-0002-7936-3626'],'email':'turkiahmet26@gmail.com','knowsAbout':DATA['profile']['en']['interests']},{'@type':'WebSite','@id':ORIGIN+'/#website','name':DATA['profile']['ar']['displayName'],'alternateName':['Türki Ahmet','Turki Al Ahmad'],'url':ORIGIN+'/'},{'@type':'WebPage','@id':url+'#webpage','url':url,'name':title,'inLanguage':lang,'isPartOf':{'@id':ORIGIN+'/#website'}}]+(graph or [])}
+    obj={'@context':'https://schema.org','@graph':[{'@type':'Person','@id':ORIGIN+'/#person','name':p['displayName'],'alternateName':['تركي الاحمد','تركي الأحمد','Türki Ahmet','Turki Ahmet','Turki Al Ahmad'],'description':full_description(lang),'url':ORIGIN+'/en/','sameAs':profile_same_as(),'email':'turkiahmet26@gmail.com','knowsAbout':DATA['profile']['en']['interests']},{'@type':'WebSite','@id':ORIGIN+'/#website','name':DATA['profile']['ar']['displayName'],'alternateName':['Türki Ahmet','Turki Al Ahmad'],'url':ORIGIN+'/'},{'@type':'WebPage','@id':url+'#webpage','url':url,'name':title,'inLanguage':lang,'isPartOf':{'@id':ORIGIN+'/#website'}}]+(graph or [])}
     t='<!doctype html>\n<html lang="'+lang+'" dir="'+('rtl' if lang=='ar' else 'ltr')+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>'+E(title)+'</title><meta name="description" content="'+E(description)+'"><meta name="author" content="'+E(p['displayName'])+'"><meta name="robots" content="index,follow"><link rel="canonical" href="'+url+'">'+alternates+'<link rel="alternate" hreflang="x-default" href="'+ORIGIN+'/ar/'+path+'"><meta property="og:title" content="'+E(title)+'"><meta property="og:description" content="'+E(description)+'"><meta property="og:url" content="'+url+'"><meta property="og:site_name" content="'+E(p['displayName'])+'"><meta name="twitter:card" content="summary"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/style.css?v=20261105-2"><script type="application/ld+json">'+json.dumps(obj,ensure_ascii=False).replace('<','\\u003c')+'</script><meta name="google-site-verification" content="'+VERIFY+'"></head><body><a class="skip" href="#main">'+E({'ar':'انتقل إلى المحتوى','tr':'İçeriğe geç','en':'Skip to content'}[lang])+'</a><header class="site-header"><div class="container header-inner"><a class="brand" href="/'+lang+'/"><span class="brand-mark" aria-hidden="true">TA</span><span class="brand-name">'+E(p['displayName'])+'</span></a>'+langnav(lang,path)+'</div></header><main id="main" class="container"><nav class="breadcrumb"><a href="/'+lang+'/">'+E(lab['home'])+'</a></nav>'+content+'</main><footer class="site-footer"><div class="container footer-inner"><p>'+E(p['displayName'])+'</p><p>'+E(lab['contact'])+': <a href="mailto:turkiahmet26@gmail.com">turkiahmet26@gmail.com</a></p>'+langnav(lang)+'</div></footer><script src="/assets/services.js?v=20261105-4" defer></script></body></html>\n'
     return t
 
